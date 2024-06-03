@@ -1,10 +1,10 @@
 import cv2
 import glob
 import math
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # FIRST TASK
 
 def array_of_images(path):
@@ -253,45 +253,6 @@ def draw_fruit_outline(image, mask, thickness, color=(0, 255, 0)):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # SECOND TASK
 
-def draw_defect2(image, component, thickness, scale, min_area, max_area, min_parallax):
-    """
-    Draws defects on the image based on the given component.
-
-    Parameters:
-        image (numpy.ndarray): The image on which to draw defects.
-        component (numpy.ndarray): The component containing defects.
-        thickness (int): Thickness of the drawn ellipse.
-        scale (float): Scale factor for the ellipse axes.
-        min_area (float): Minimum area of the defect to be drawn.
-        max_area (float): Maximum area of the defect to be drawn.
-        min_parallax (float): Minimum parallax distance between defects.
-
-    Returns:
-        int: Number of defects drawn.
-    """
-    contours, hierarchy = cv2.findContours(component, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-    if len(contours) == 0:
-        return 0
-
-    filtered_contours = filter_duplicated_contours(contours, min_parallax)
-
-    drawn = 0
-
-    for c in filtered_contours:
-        area = cv2.contourArea(c)
-        if min_area < area and len(c) >= 5:
-            ellipse = cv2.fitEllipse(c)
-            scaled_axes = (ellipse[1][0] * scale, ellipse[1][1] * scale)
-            if scaled_axes[0] * scaled_axes[1] * math.pi < max_area:
-                scaled_ellipse = ellipse[0], scaled_axes, ellipse[2]
-                cv2.ellipse(image, scaled_ellipse, (0, 0, 255), thickness)
-                drawn += 1
-
-    return drawn
-
-
-
 def upload_samples(path):
     """
     Load images from files in the specified directory.
@@ -308,27 +269,3 @@ def upload_samples(path):
     samples = [cv2.imread(img) for img in samples_file_names]
 
     return samples
-
-
-def mahalanobis_sample(samples, russet_sample):
-    """
-    Computes a sample for Mahalanobis distance usage.
-
-    Args:
-    - samples: list of RGB image samples
-    - russet_sample: RGB image sample of a russet apple defect
-
-    Returns:
-    - result: array containing the mean value of the L* channel of the samples, 
-              followed by the L* and a* values of the russet defect sample
-    """
-    mean_tot = 0
-
-    for s in samples:
-        s_lab = cv2.cvtColor(s, cv2.COLOR_BGR2LAB)
-        mean_tot += np.mean(s_lab, axis=(0, 1))[0]
-
-    mean = mean_tot / len(samples)
-    result = np.array([mean, russet_sample[0][0], russet_sample[0][1]])
-
-    return result
